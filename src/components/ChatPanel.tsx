@@ -21,7 +21,7 @@ export function ChatPanel() {
   };
 
   return (
-    <div className="glass-card rounded-lg flex flex-col h-[420px]">
+    <div className="glass-card rounded-lg flex flex-col h-full min-h-[420px]">
       <div className="p-4 border-b border-border flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
           <MessageSquare className="h-4 w-4 text-primary" />

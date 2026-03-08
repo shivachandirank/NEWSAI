@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { StatsCards } from "@/components/StatsCards";
 import { SentimentCharts } from "@/components/SentimentCharts";
+import { EmotionPanel } from "@/components/EmotionPanel";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { fetchArticles, NewsArticle } from "@/lib/api";
 
@@ -15,13 +16,18 @@ export default function DashboardPage() {
     <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-foreground">Analytics Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Real-time sentiment analysis and trend breakdowns</p>
+        <p className="text-sm text-muted-foreground">Real-time sentiment, emotion analysis, and trend breakdowns</p>
       </div>
       <AnimatedSection>
         <StatsCards articles={articles} />
       </AnimatedSection>
       <AnimatedSection delay={0.1}>
         <SentimentCharts articles={articles} />
+      </AnimatedSection>
+      <AnimatedSection delay={0.2}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <EmotionPanel articles={articles} />
+        </div>
       </AnimatedSection>
     </div>
   );

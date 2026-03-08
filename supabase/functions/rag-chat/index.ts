@@ -22,36 +22,40 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // RAG: Retrieve relevant articles from DB based on latest user message
-    const userMsg = messages[messages.length - 1]?.content || "";
     const { data: articles } = await supabase
       .from("news_articles")
-      .select("title, source, sentiment_label, sentiment_score, topics, content, url, credibility_score, is_fake, published_date")
+      .select("title, source, sentiment_label, sentiment_score, topics, content, url, credibility_score, is_fake, published_date, emotions, bias_label, bias_score, influence_score, entities")
       .order("created_at", { ascending: false })
       .limit(20);
 
-    // Build context from retrieved articles
     const context = (articles || [])
       .map(
         (a, i) =>
           `[Article ${i + 1}] "${a.title}" (${a.source}) - Sentiment: ${a.sentiment_label} (${a.sentiment_score}), ` +
-          `Credibility: ${(a.credibility_score * 100).toFixed(0)}%, Fake: ${a.is_fake ? "Yes" : "No"}, ` +
-          `Topics: ${(a.topics || []).join(", ")}\n` +
-          `Content: ${(a.content || "").substring(0, 500)}\n`
+          `Credibility: ${((a.credibility_score || 0) * 100).toFixed(0)}%, Fake: ${a.is_fake ? "Yes" : "No"}, ` +
+          `Topics: ${(a.topics || []).join(", ")}, ` +
+          `Emotions: ${a.emotions ? JSON.stringify(a.emotions) : "N/A"}, ` +
+          `Bias: ${a.bias_label || "N/A"} (${((a.bias_score || 0) * 100).toFixed(0)}%), ` +
+          `Influence: ${((a.influence_score || 0) * 100).toFixed(0)}%, ` +
+          `Entities: ${a.entities ? JSON.stringify(a.entities) : "N/A"}\n` +
+          `Content: ${(a.content || "").substring(0, 400)}\n`
       )
       .join("\n");
 
-    const systemPrompt = `You are NewsPulse AI, an intelligent news analysis assistant. You have access to a database of recently analyzed news articles. Use the following context to answer questions about news sentiment, trends, fake news, and topics.
+    const systemPrompt = `You are NewsPulse AI, an advanced news intelligence assistant with access to comprehensive article analysis data including sentiment, emotions, bias, credibility, entities, and influence scores.
 
 CONTEXT (Recent News Articles):
 ${context || "No articles found in the database yet. Suggest the user scrape some news first."}
 
 Instructions:
-- Answer questions about news sentiment, trends, and topics based on the context
-- Cite specific articles when relevant
-- Provide data-driven insights
-- If asked about sentiment trends, summarize the overall patterns
-- Be concise but informative`;
+- Answer questions about news sentiment, emotions, bias, trends, entities, and topics
+- Cite specific articles when relevant using their titles
+- Provide data-driven insights with specific numbers
+- When asked about entities, reference people, organizations, locations, and technologies
+- When asked about bias, reference the bias labels and scores
+- When asked about emotions, reference the emotion scores
+- When asked about contradictions, compare sentiment across similar topics
+- Be concise but thorough, use markdown formatting`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -69,14 +73,12 @@ Instructions:
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limited. Please try again shortly." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const t = await response.text();
@@ -91,8 +93,7 @@ Instructions:
     console.error("rag-chat error:", e);
     const msg = e instanceof Error ? e.message : "Unknown error";
     return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });

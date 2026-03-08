@@ -21,7 +21,7 @@ serve(async (req) => {
 
     const { data: articles } = await supabase
       .from("news_articles")
-      .select("title, sentiment_label, sentiment_score, topics, credibility_score, is_fake, domain, source")
+      .select("title, sentiment_label, sentiment_score, topics, credibility_score, is_fake, domain, source, emotions, bias_label, bias_score, influence_score, entities")
       .order("created_at", { ascending: false })
       .limit(30);
 
@@ -31,9 +31,13 @@ serve(async (req) => {
       });
     }
 
-    const summary = articles.map(a =>
-      `"${a.title}" - ${a.sentiment_label} (${a.sentiment_score}), Credibility: ${((a.credibility_score || 0) * 100).toFixed(0)}%, Topics: ${(a.topics || []).join(", ")}`
-    ).join("\n");
+    const summary = articles.map(a => {
+      const emotions = a.emotions ? `Emotions: ${JSON.stringify(a.emotions)}` : "";
+      const bias = a.bias_label ? `Bias: ${a.bias_label} (${((a.bias_score || 0) * 100).toFixed(0)}%)` : "";
+      const influence = a.influence_score ? `Influence: ${((a.influence_score || 0) * 100).toFixed(0)}%` : "";
+      const entities = a.entities ? `Entities: ${JSON.stringify(a.entities)}` : "";
+      return `"${a.title}" - ${a.sentiment_label} (${a.sentiment_score}), Credibility: ${((a.credibility_score || 0) * 100).toFixed(0)}%, Topics: ${(a.topics || []).join(", ")}, ${emotions}, ${bias}, ${influence}, ${entities}`;
+    }).join("\n");
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -46,9 +50,18 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are a news intelligence analyst. Generate a concise, insightful summary of the current news landscape based on the articles provided. Focus on overall sentiment trends, key topics, credibility concerns, and actionable takeaways. Keep it to 3-4 sentences.",
+            content: `You are a senior news intelligence analyst. Generate a comprehensive executive briefing covering:
+1. Overall sentiment trends and dominant emotions
+2. Key entities and their relationships
+3. Bias patterns across sources
+4. Credibility concerns and fake news alerts
+5. Contradictory reporting detected
+6. Top influence articles and trending topics
+7. Actionable recommendations
+
+Use markdown formatting with headers and bullet points. Be data-driven and cite specific findings.`,
           },
-          { role: "user", content: `Analyze these recent articles and provide insights:\n\n${summary}` },
+          { role: "user", content: `Analyze these recent articles and provide a full intelligence briefing:\n\n${summary}` },
         ],
       }),
     });
@@ -56,6 +69,9 @@ serve(async (req) => {
     if (!aiRes.ok) {
       if (aiRes.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limited" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (aiRes.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
       throw new Error("AI gateway error");
     }

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { NewsArticle } from "@/lib/api";
-import { TrendingUp, TrendingDown, Minus, Newspaper, BarChart3, Shield } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Newspaper, BarChart3, Shield, Heart, Scale } from "lucide-react";
 import { AnimatedCard } from "@/components/AnimatedSection";
 import { motion } from "framer-motion";
 

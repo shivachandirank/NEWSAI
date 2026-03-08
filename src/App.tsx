@@ -13,6 +13,13 @@ import TopicsPage from "./pages/TopicsPage";
 import FakeNewsPage from "./pages/FakeNewsPage";
 import InsightsPage from "./pages/InsightsPage";
 import ChatPage from "./pages/ChatPage";
+import EmotionsPage from "./pages/EmotionsPage";
+import BiasPage from "./pages/BiasPage";
+import EntitiesPage from "./pages/EntitiesPage";
+import ContradictionsPage from "./pages/ContradictionsPage";
+import InfluencePage from "./pages/InfluencePage";
+import TrendsPage from "./pages/TrendsPage";
+import SimilarityPage from "./pages/SimilarityPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +39,13 @@ const App = () => (
               <Route path="/articles" element={<ArticlesPage />} />
               <Route path="/topics" element={<TopicsPage />} />
               <Route path="/fake-news" element={<FakeNewsPage />} />
+              <Route path="/emotions" element={<EmotionsPage />} />
+              <Route path="/bias" element={<BiasPage />} />
+              <Route path="/entities" element={<EntitiesPage />} />
+              <Route path="/contradictions" element={<ContradictionsPage />} />
+              <Route path="/influence" element={<InfluencePage />} />
+              <Route path="/trends" element={<TrendsPage />} />
+              <Route path="/similarity" element={<SimilarityPage />} />
               <Route path="/insights" element={<InsightsPage />} />
               <Route path="/chat" element={<ChatPage />} />
               <Route path="*" element={<NotFound />} />

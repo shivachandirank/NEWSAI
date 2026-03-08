@@ -1,5 +1,21 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export interface EmotionScores {
+  joy: number;
+  fear: number;
+  anger: number;
+  sadness: number;
+  surprise: number;
+  disgust: number;
+}
+
+export interface EntityData {
+  people: string[];
+  organizations: string[];
+  locations: string[];
+  technologies: string[];
+}
+
 export interface NewsArticle {
   id: string;
   title: string;
@@ -16,6 +32,11 @@ export interface NewsArticle {
   query: string | null;
   domain: string | null;
   created_at: string;
+  emotions: EmotionScores | null;
+  bias_label: string | null;
+  bias_score: number | null;
+  influence_score: number | null;
+  entities: EntityData | null;
 }
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -36,9 +57,9 @@ export async function fetchArticles(): Promise<NewsArticle[]> {
     .from("news_articles")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(200);
   if (error) throw error;
-  return data || [];
+  return (data || []) as unknown as NewsArticle[];
 }
 
 export async function generateInsights(): Promise<string> {
@@ -101,8 +122,7 @@ export async function streamChat({
     }
   }
 
-  // Flush remaining
-  for (let raw of buffer.split("\n")) {
+  for (const raw of buffer.split("\n")) {
     if (!raw || !raw.startsWith("data: ")) continue;
     const json = raw.slice(6).trim();
     if (json === "[DONE]") continue;

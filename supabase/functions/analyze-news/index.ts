@@ -54,8 +54,8 @@ serve(async (req) => {
       });
     }
 
-    // Step 2: Analyze each article with AI
-    console.log(`Analyzing ${articles.length} articles...`);
+    // Step 2: Analyze each article with AI (enhanced analysis)
+    console.log(`Analyzing ${articles.length} articles with full intelligence pipeline...`);
     const analyzedArticles = [];
 
     for (const article of articles) {
@@ -74,11 +74,11 @@ serve(async (req) => {
           messages: [
             {
               role: "system",
-              content: `You are a news analysis AI. Analyze the given article and return structured analysis. You must call the analyze_article function with your results.`,
+              content: `You are an advanced news intelligence AI. Perform comprehensive analysis of the given article including sentiment, emotion, credibility, bias, topic extraction, and named entity recognition. You must call the analyze_article function with your results.`,
             },
             {
               role: "user",
-              content: `Analyze this news article:\n\nTitle: ${title}\n\nContent: ${truncatedContent}`,
+              content: `Perform full intelligence analysis on this news article:\n\nTitle: ${title}\nSource: ${article.url ? new URL(article.url).hostname : "unknown"}\n\nContent: ${truncatedContent}`,
             },
           ],
           tools: [
@@ -86,18 +86,54 @@ serve(async (req) => {
               type: "function",
               function: {
                 name: "analyze_article",
-                description: "Return structured analysis of a news article",
+                description: "Return comprehensive structured analysis of a news article",
                 parameters: {
                   type: "object",
                   properties: {
                     sentiment_label: { type: "string", enum: ["Positive", "Negative", "Neutral"] },
-                    sentiment_score: { type: "number", description: "Score from -1 (negative) to 1 (positive)" },
-                    confidence_score: { type: "number", description: "Confidence 0-1" },
-                    credibility_score: { type: "number", description: "Credibility 0-1, 1 = very credible" },
+                    sentiment_score: { type: "number", description: "Score from -1 (very negative) to 1 (very positive)" },
+                    confidence_score: { type: "number", description: "Analysis confidence 0-1" },
+                    credibility_score: { type: "number", description: "Source credibility 0-1, 1 = very credible" },
                     is_fake: { type: "boolean", description: "Whether article appears to be fake/misleading" },
                     topics: { type: "array", items: { type: "string" }, description: "3-5 key topics/keywords" },
+                    emotions: {
+                      type: "object",
+                      description: "Emotion scores detected in the article, each 0-1",
+                      properties: {
+                        joy: { type: "number" },
+                        fear: { type: "number" },
+                        anger: { type: "number" },
+                        sadness: { type: "number" },
+                        surprise: { type: "number" },
+                        disgust: { type: "number" },
+                      },
+                      required: ["joy", "fear", "anger", "sadness", "surprise", "disgust"],
+                      additionalProperties: false,
+                    },
+                    bias_label: {
+                      type: "string",
+                      enum: ["Left", "Center-Left", "Center", "Center-Right", "Right", "Neutral"],
+                      description: "Political/ideological bias detected",
+                    },
+                    bias_score: { type: "number", description: "Bias intensity 0-1, 0=unbiased, 1=heavily biased" },
+                    entities: {
+                      type: "object",
+                      description: "Named entities extracted from the article",
+                      properties: {
+                        people: { type: "array", items: { type: "string" } },
+                        organizations: { type: "array", items: { type: "string" } },
+                        locations: { type: "array", items: { type: "string" } },
+                        technologies: { type: "array", items: { type: "string" } },
+                      },
+                      required: ["people", "organizations", "locations", "technologies"],
+                      additionalProperties: false,
+                    },
                   },
-                  required: ["sentiment_label", "sentiment_score", "confidence_score", "credibility_score", "is_fake", "topics"],
+                  required: [
+                    "sentiment_label", "sentiment_score", "confidence_score",
+                    "credibility_score", "is_fake", "topics", "emotions",
+                    "bias_label", "bias_score", "entities"
+                  ],
                   additionalProperties: false,
                 },
               },
@@ -126,6 +162,12 @@ serve(async (req) => {
         continue;
       }
 
+      // Calculate influence score
+      const sentimentStrength = Math.abs(analysis.sentiment_score || 0);
+      const sourceCredibility = analysis.credibility_score || 0.5;
+      const topicCount = (analysis.topics || []).length / 5;
+      const influenceScore = Math.min(1, (sentimentStrength * 0.4 + sourceCredibility * 0.4 + topicCount * 0.2));
+
       const articleRecord = {
         title,
         source: article.url ? new URL(article.url).hostname : null,
@@ -138,6 +180,11 @@ serve(async (req) => {
         credibility_score: analysis.credibility_score,
         is_fake: analysis.is_fake,
         topics: analysis.topics,
+        emotions: analysis.emotions,
+        bias_label: analysis.bias_label,
+        bias_score: analysis.bias_score,
+        influence_score: influenceScore,
+        entities: analysis.entities,
         query,
         domain: domain || null,
       };
@@ -151,7 +198,7 @@ serve(async (req) => {
       if (insertError) console.error("Insert error:", insertError);
     }
 
-    console.log(`Successfully analyzed ${analyzedArticles.length} articles`);
+    console.log(`Successfully analyzed ${analyzedArticles.length} articles with full intelligence pipeline`);
     return new Response(JSON.stringify({ success: true, articles: analyzedArticles }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

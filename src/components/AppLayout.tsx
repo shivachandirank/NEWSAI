@@ -3,21 +3,53 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Zap, Home, Search, BarChart3, Newspaper, Tags, ShieldAlert,
-  Sparkles, MessageSquare, Menu, X
+  Sparkles, MessageSquare, Menu, X, Heart, Scale, Network,
+  AlertTriangle, Trophy, TrendingUp, Link2
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
-const NAV_ITEMS = [
-  { to: "/", label: "Home", icon: Home },
-  { to: "/search", label: "Scanner", icon: Search },
-  { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
-  { to: "/articles", label: "Articles", icon: Newspaper },
-  { to: "/topics", label: "Topics", icon: Tags },
-  { to: "/fake-news", label: "Credibility", icon: ShieldAlert },
-  { to: "/insights", label: "AI Insights", icon: Sparkles },
-  { to: "/chat", label: "RAG Chat", icon: MessageSquare },
+const NAV_SECTIONS = [
+  {
+    label: "Main",
+    items: [
+      { to: "/", label: "Home", icon: Home },
+      { to: "/search", label: "Scanner", icon: Search },
+      { to: "/dashboard", label: "Dashboard", icon: BarChart3 },
+      { to: "/articles", label: "Articles", icon: Newspaper },
+    ],
+  },
+  {
+    label: "Analysis",
+    items: [
+      { to: "/topics", label: "Topics", icon: Tags },
+      { to: "/emotions", label: "Emotions", icon: Heart },
+      { to: "/bias", label: "Bias Detection", icon: Scale },
+      { to: "/fake-news", label: "Credibility", icon: ShieldAlert },
+    ],
+  },
+  {
+    label: "Intelligence",
+    items: [
+      { to: "/entities", label: "Knowledge Graph", icon: Network },
+      { to: "/contradictions", label: "Contradictions", icon: AlertTriangle },
+      { to: "/influence", label: "Influence", icon: Trophy },
+      { to: "/trends", label: "Trends", icon: TrendingUp },
+      { to: "/similarity", label: "Similar Articles", icon: Link2 },
+    ],
+  },
+  {
+    label: "AI",
+    items: [
+      { to: "/insights", label: "AI Insights", icon: Sparkles },
+      { to: "/chat", label: "RAG Chat", icon: MessageSquare },
+    ],
+  },
 ];
+
+const ALL_NAV_ITEMS = NAV_SECTIONS.flatMap((s) => s.items);
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -38,39 +70,50 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </motion.div>
             <div>
               <h1 className="text-base font-bold text-foreground tracking-tight">NewsPulse</h1>
-              <p className="text-[10px] text-muted-foreground font-mono">RAG Intelligence</p>
+              <p className="text-[10px] text-muted-foreground font-mono">AI Intelligence v3.0</p>
             </div>
           </Link>
         </div>
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {NAV_ITEMS.map((item) => {
-            const active = location.pathname === item.to;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                  active
-                    ? "bg-primary/10 text-primary shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-              >
-                <item.icon className="h-4 w-4 shrink-0" />
-                {item.label}
-                {active && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"
-                  />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+        <ScrollArea className="flex-1">
+          <nav className="p-3 space-y-4">
+            {NAV_SECTIONS.map((section) => (
+              <div key={section.label}>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-3 mb-1.5">
+                  {section.label}
+                </p>
+                <div className="space-y-0.5">
+                  {section.items.map((item) => {
+                    const active = location.pathname === item.to;
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        className={cn(
+                          "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                          active
+                            ? "bg-primary/10 text-primary shadow-sm"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        )}
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        {item.label}
+                        {active && (
+                          <motion.div
+                            layoutId="nav-indicator"
+                            className="ml-auto h-1.5 w-1.5 rounded-full bg-primary"
+                          />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </nav>
+        </ScrollArea>
         <div className="p-4 border-t border-border">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground font-mono">v2.0</span>
+            <span className="text-[10px] text-muted-foreground font-mono">v3.0 — 15 modules</span>
             <ThemeToggle />
           </div>
         </div>
@@ -98,26 +141,33 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden border-t border-border bg-card"
+              className="overflow-hidden border-t border-border bg-card max-h-[70vh] overflow-y-auto"
             >
-              <div className="p-3 space-y-1">
-                {NAV_ITEMS.map((item) => {
-                  const active = location.pathname === item.to;
-                  return (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                        active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/50"
-                      )}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.label}
-                    </Link>
-                  );
-                })}
+              <div className="p-3 space-y-3">
+                {NAV_SECTIONS.map((section) => (
+                  <div key={section.label}>
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-3 mb-1">
+                      {section.label}
+                    </p>
+                    {section.items.map((item) => {
+                      const active = location.pathname === item.to;
+                      return (
+                        <Link
+                          key={item.to}
+                          to={item.to}
+                          onClick={() => setMobileOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                            active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted/50"
+                          )}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             </motion.nav>
           )}

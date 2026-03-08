@@ -16,12 +16,17 @@ export type Database = {
     Tables: {
       news_articles: {
         Row: {
+          bias_label: string | null
+          bias_score: number | null
           confidence_score: number | null
           content: string
           created_at: string
           credibility_score: number | null
           domain: string | null
+          emotions: Json | null
+          entities: Json | null
           id: string
+          influence_score: number | null
           is_fake: boolean | null
           published_date: string | null
           query: string | null
@@ -33,12 +38,17 @@ export type Database = {
           url: string | null
         }
         Insert: {
+          bias_label?: string | null
+          bias_score?: number | null
           confidence_score?: number | null
           content: string
           created_at?: string
           credibility_score?: number | null
           domain?: string | null
+          emotions?: Json | null
+          entities?: Json | null
           id?: string
+          influence_score?: number | null
           is_fake?: boolean | null
           published_date?: string | null
           query?: string | null
@@ -50,12 +60,17 @@ export type Database = {
           url?: string | null
         }
         Update: {
+          bias_label?: string | null
+          bias_score?: number | null
           confidence_score?: number | null
           content?: string
           created_at?: string
           credibility_score?: number | null
           domain?: string | null
+          emotions?: Json | null
+          entities?: Json | null
           id?: string
+          influence_score?: number | null
           is_fake?: boolean | null
           published_date?: string | null
           query?: string | null

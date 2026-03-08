@@ -1,0 +1,44 @@
+import { useMemo } from "react";
+import { NewsArticle } from "@/lib/api";
+import { TrendingUp, TrendingDown, Minus, Newspaper, BarChart3, Shield } from "lucide-react";
+
+interface Props {
+  articles: NewsArticle[];
+}
+
+export function StatsCards({ articles }: Props) {
+  const stats = useMemo(() => {
+    const total = articles.length;
+    const positive = articles.filter((a) => a.sentiment_label === "Positive").length;
+    const negative = articles.filter((a) => a.sentiment_label === "Negative").length;
+    const avgScore = total > 0
+      ? articles.reduce((s, a) => s + (a.sentiment_score || 0), 0) / total
+      : 0;
+    const avgCred = total > 0
+      ? articles.reduce((s, a) => s + (a.credibility_score || 0), 0) / total
+      : 0;
+    const fakeCount = articles.filter((a) => a.is_fake).length;
+    return { total, positive, negative, avgScore, avgCred, fakeCount };
+  }, [articles]);
+
+  const cards = [
+    { label: "Total Articles", value: stats.total, icon: Newspaper, color: "text-primary" },
+    { label: "Avg Sentiment", value: stats.avgScore > 0 ? `+${stats.avgScore.toFixed(2)}` : stats.avgScore.toFixed(2), icon: stats.avgScore > 0 ? TrendingUp : stats.avgScore < 0 ? TrendingDown : Minus, color: stats.avgScore > 0 ? "text-success" : stats.avgScore < 0 ? "text-destructive" : "text-muted-foreground" },
+    { label: "Positive / Negative", value: `${stats.positive} / ${stats.negative}`, icon: BarChart3, color: "text-primary" },
+    { label: "Avg Credibility", value: `${(stats.avgCred * 100).toFixed(0)}%`, icon: Shield, color: stats.avgCred > 0.7 ? "text-success" : "text-warning" },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {cards.map((c) => (
+        <div key={c.label} className="glass-card rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <c.icon className={`h-4 w-4 ${c.color}`} />
+            <span className="text-xs text-muted-foreground">{c.label}</span>
+          </div>
+          <div className="text-xl font-bold text-foreground">{c.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}

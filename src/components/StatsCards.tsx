@@ -33,7 +33,26 @@ export function StatsCards({ articles }: Props) {
       ? articles.reduce((s, a) => s + (a.credibility_score || 0), 0) / total
       : 0;
     const fakeCount = articles.filter((a) => a.is_fake).length;
-    return { total, positive, negative, avgScore, avgCred, fakeCount };
+    
+    const withEmotions = articles.filter(a => a.emotions);
+    const dominantEmotion = withEmotions.length > 0 ? (() => {
+      const sums: Record<string, number> = {};
+      withEmotions.forEach(a => {
+        if (a.emotions) {
+          Object.entries(a.emotions).forEach(([k, v]) => {
+            sums[k] = (sums[k] || 0) + (v as number);
+          });
+        }
+      });
+      const top = Object.entries(sums).sort((a, b) => b[1] - a[1])[0];
+      return top ? top[0] : "—";
+    })() : "—";
+
+    const avgBias = total > 0
+      ? articles.reduce((s, a) => s + (a.bias_score || 0), 0) / total
+      : 0;
+
+    return { total, positive, negative, avgScore, avgCred, fakeCount, dominantEmotion, avgBias };
   }, [articles]);
 
   const cards = [
@@ -41,6 +60,8 @@ export function StatsCards({ articles }: Props) {
     { label: "Avg Sentiment", value: <AnimatedNumber value={stats.avgScore} decimals={2} prefix={stats.avgScore > 0 ? "+" : ""} />, icon: stats.avgScore > 0 ? TrendingUp : stats.avgScore < 0 ? TrendingDown : Minus, color: stats.avgScore > 0 ? "text-success" : stats.avgScore < 0 ? "text-destructive" : "text-muted-foreground" },
     { label: "Positive / Negative", value: <><AnimatedNumber value={stats.positive} /> / <AnimatedNumber value={stats.negative} /></>, icon: BarChart3, color: "text-primary" },
     { label: "Avg Credibility", value: <AnimatedNumber value={Math.round(stats.avgCred * 100)} suffix="%" />, icon: Shield, color: stats.avgCred > 0.7 ? "text-success" : "text-warning" },
+    { label: "Top Emotion", value: <span className="capitalize">{stats.dominantEmotion}</span>, icon: Heart, color: "text-warning" },
+    { label: "Avg Bias", value: <AnimatedNumber value={Math.round(stats.avgBias * 100)} suffix="%" />, icon: Scale, color: stats.avgBias > 0.5 ? "text-destructive" : "text-muted-foreground" },
   ];
 
   return (
